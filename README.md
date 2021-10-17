@@ -1,0 +1,2 @@
+# djangoProject
+Django assignment
