@@ -1,5 +1,5 @@
-from account.models import Account
-from account.serializers import AccountSerializer
+from account.models import Account, Avatar
+from account.serializers import AccountSerializer, AvatarSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -23,32 +23,45 @@ class LoginViews(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 class AccountViews(APIView):
+    def getData(self,account, avatar):
+        data = {
+            'first_name': account.first_name,
+            'last_name': account.last_name,
+            'date_of_birth': account.date_of_birth,
+            'email': account.email,
+            'password': account.password,
+            'avatar': avatar.avatar,
+        }
+
+        return data
     def get(self,request, id):
             session = sqlalchemy_session()
-            account = session.query(Account).\
+            data = session.query(Account, Avatar).\
+                filter(Account.id == Avatar.account_id).\
                 filter_by(id=id).one_or_none()
-    
-            if account is not None:
-                serializer = AccountSerializer(account)
+            if data is not None:
                 session.close()
-                return Response(serializer.data)
+                account, avatar = data
+
+                return Response(self.getData(account, avatar))
 
             session.close()
             raise Http404
     
     def post(self, request):
-        serializer = AccountSerializer(data=request.data)
+        accountSerializer = AccountSerializer(data=request.data.get('account'))
+        avatarSerializer = AvatarSerializer(data=request.data.get('avatar'))
 
-        if serializer.is_valid():
+        if accountSerializer.is_valid() and avatarSerializer.is_valid():
             session = sqlalchemy_session()
-            account = Account(**serializer.validated_data)
+            account = Account(**accountSerializer.validated_data)
+            account.avatars = Avatar(**avatarSerializer.validated_data)
             session.add(account)
             session.commit()
             id = account.id
             session.close()
             return Response({'id': id}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, id):
         session = sqlalchemy_session()
@@ -59,14 +72,18 @@ class AccountViews(APIView):
             session.close()
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = AccountSerializer(account, data=request.data)
+        accountSerializer = AccountSerializer(data=request.data.get('account'))
+        avatarSerializer = AvatarSerializer(data=request.data.get('avatar'))
 
-        if serializer.is_valid():
-            for key, value in serializer.validated_data.items():
+        if accountSerializer.is_valid() and avatarSerializer.is_valid():
+            for key, value in accountSerializer.validated_data.items():
                 setattr(account, key, value)
-
+    
+            for key, value in avatarSerializer.validated_data.items():
+                setattr(account.avatars, key, value)
+    
             session.commit()
             id = account.id
             session.close()
-            return Response({'id': serializer.data.get('id')}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'id': id}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)

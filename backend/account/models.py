@@ -1,5 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column,Integer, String, Date, create_engine
+from sqlalchemy import Column,Integer, String, Date, create_engine, ForeignKey
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 engine = create_engine('postgresql://postgres:1505039@localhost/djangoProject', echo=True)
@@ -20,7 +21,15 @@ class Account(Base):
     email = Column(String(50), unique=True)
     password = Column(String(20))
     date_of_birth = Column(Date)
+    avatars = relationship("Avatar", uselist=False, back_populates="account")
+
+class Avatar(Base):
+    __tablename__ = 'avatar'
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, ForeignKey('account.id'))
     avatar = Column(String)
+    account = relationship("Account", back_populates="avatars")
 
 Base.metadata.create_all(engine)
     

@@ -56,12 +56,17 @@ function SignUp(props) {
 
     const onSubmit = async () => {
         const payload = {
-            first_name: firstName,
-            last_name: lastName,
-            date_of_birth: moment(dateOfBirth).format('YYYY-MM-DD'),
-            avatar,
-            email,
-            password,
+            account: {
+                first_name: firstName,
+                last_name: lastName,
+                date_of_birth: moment(dateOfBirth).format('YYYY-MM-DD'),
+                email,
+                password,
+            },
+            avatar: {
+                avatar,
+            }
+            
         };
 
         try {
@@ -75,12 +80,17 @@ function SignUp(props) {
 
     const onUpdate = async () => {
         const payload = {
-            first_name: firstName,
-            last_name: lastName,
-            date_of_birth: moment(dateOfBirth).format('YYYY-MM-DD'),
-            avatar,
-            email,
-            password,
+            account: {
+                first_name: firstName,
+                last_name: lastName,
+                date_of_birth: moment(dateOfBirth).format('YYYY-MM-DD'),
+                email,
+                password,
+            },
+            avatar: {
+                avatar,
+            }
+            
         };
 
         try {
